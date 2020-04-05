@@ -23,7 +23,9 @@
 
 #define CAN CAN1
 
-//#define PEDAL_USB
+#define PEDAL_USB
+
+#define DEBUG
 
 #ifdef PEDAL_USB
   #include "drivers/uart.h"
@@ -259,12 +261,20 @@ void TIM3_IRQ_Handler(void) {
   }
 }
 
+
+uint32_t adjust(uint32_t readVal) {
+  return (readVal * 1560)/1000;
+}
+
 // ***************************** main code *****************************
 
 void pedal(void) {
   // read/write
-  pdl0 = adc_get(ADCCHAN_ACCEL0);
-  pdl1 = adc_get(ADCCHAN_ACCEL1);
+  pdl0 = adjust(adc_get(ADCCHAN_ACCEL0));
+  pdl1 = adjust(adc_get(ADCCHAN_ACCEL1));
+
+
+
 
   // write the pedal to the DAC
   if (state == NO_FAULT) {
@@ -333,3 +343,4 @@ int main(void) {
 
   return 0;
 }
+
