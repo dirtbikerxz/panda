@@ -261,7 +261,8 @@ void TIM3_IRQ_Handler(void) {
   }
 }
 
-
+//This scales the values read from the ADC to match the expected values for the Chevy Bolt EV
+//TODO: some means of making this more configurable / automatic
 uint32_t adjust(uint32_t readVal) {
   return (readVal * 1560)/1000;
 }

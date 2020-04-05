@@ -28,7 +28,8 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0},  // pt bus
+const int GM_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
+const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0}, {200, 0}  // pt bus
                               {161, 1}, {774, 1}, {776, 1}, {784, 1},   // obs bus
                               {789, 2},  // ch bus
                               {0x104c006c, 3}, {0x10400060, 3}};  // gmlan
@@ -145,13 +146,29 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       gm_brake_prev = brake;
     }
 
-    // exit controls on rising edge of gas press
-    if (addr == 417) {
-      int gas = GET_BYTE(to_push, 6);
-      if (gas && !gm_gas_prev) {
+
+
+    // exit controls on rising edge of gas press if interceptor (0x201 w/ len = 6)
+    // length check because bosch hardware also uses this id (0x201 w/ len = 8)
+    if (addr == 0x201) {
+      gas_interceptor_detected = 1;
+      int gas_interceptor = GET_INTERCEPTOR(to_push);
+      if ((gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD) &&
+          (gas_interceptor_prev <= GM_GAS_INTERCEPTOR_THRESHOLD)) {
         controls_allowed = 0;
       }
-      gm_gas_prev = gas;
+      gas_interceptor_prev = gas_interceptor;
+    }
+
+    // exit controls on rising edge of gas press
+    if (!gas_interceptor_detected) {
+      if (addr == 417) {
+        int gas = GET_BYTE(to_push, 6);
+        if (gas && !gm_gas_prev) {
+          controls_allowed = 0;
+        }
+        gm_gas_prev = gas;
+      }
     }
 
     // exit controls on regen paddle
@@ -195,8 +212,15 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_moving);
-  bool current_controls_allowed = controls_allowed && !pedal_pressed;
+  int pedal_pressed = gm_gas_prev || (gas_interceptor_prev > GM_GAS_INTERCEPTOR_THRESHOLD) ||
+                      (gm_brake_prev && gm_moving);
+  bool current_controls_allowed = controls_allowed && !(pedal_pressed);
+
+
+  // // disallow actuator commands if gas or brake (with vehicle moving) are pressed
+  // // and the the latching controls_allowed flag is True
+  // int pedal_pressed = gm_gas_prev || (gm_brake_prev && gm_moving);
+  // bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
   // BRAKE: safety check
   if (addr == 789) {
