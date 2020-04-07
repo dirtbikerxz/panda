@@ -28,7 +28,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const int GM_GAS_INTERCEPTOR_THRESHOLD = 328;  // ratio between offset and gain from dbc file
+const int GM_GAS_INTERCEPTOR_THRESHOLD = 458;  // (610 + 306.25) / 2ratio between offset and gain from dbc file
 const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0}, {200, 0},  // pt bus
                               {161, 1}, {774, 1}, {776, 1}, {784, 1},   // obs bus
                               {789, 2},  // ch bus
@@ -41,7 +41,6 @@ AddrCheckStruct gm_rx_checks[] = {
   {.addr = {481}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {241}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {417}, .bus = 0, .expected_timestep = 100000U},
-  {.addr = {201}, .bus = 0, .expected_timestep = 100000U},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
@@ -151,7 +150,6 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
 
     // exit controls on rising edge of gas press if interceptor (0x201 w/ len = 6)
-    // length check because bosch hardware also uses this id (0x201 w/ len = 8)
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
@@ -218,6 +216,16 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
                       (gm_brake_prev && gm_moving);
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
+
+
+  // GAS: safety check
+  if (addr == 0x200) {
+    if (!current_controls_allowed) {
+      if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
+        tx = 0;
+      }
+    }
+  }
 
   // // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // // and the the latching controls_allowed flag is True
