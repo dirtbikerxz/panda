@@ -155,7 +155,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       int gas_interceptor = GET_INTERCEPTOR(to_push);
       if ((gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD) &&
           (gas_interceptor_prev <= GM_GAS_INTERCEPTOR_THRESHOLD)) {
-        controls_allowed = 0;
+        //controls_allowed = 0; //TODO: remove / fix
       }
       gas_interceptor_prev = gas_interceptor;
     }
@@ -212,8 +212,11 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
-  int pedal_pressed = gm_gas_prev || (gas_interceptor_prev > GM_GAS_INTERCEPTOR_THRESHOLD) ||
-                      (gm_brake_prev && gm_moving);
+  // int pedal_pressed = gm_gas_prev || (gas_interceptor_prev > GM_GAS_INTERCEPTOR_THRESHOLD) ||
+  //                     (gm_brake_prev && gm_moving);
+  //only disabling whne brake is pressed
+  int pedal_pressed = (gm_brake_prev && gm_moving);
+
   bool current_controls_allowed = controls_allowed && !(pedal_pressed);
 
 
