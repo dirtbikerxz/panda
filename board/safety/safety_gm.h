@@ -296,6 +296,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
     // reset to 0 if either controls is not allowed or there's a violation
     if (violation || !current_controls_allowed) {
+      puts("no steer reset to zero");
       gm_desired_torque_last = 0;
       gm_rt_torque_last = 0;
       gm_ts_last = ts;
@@ -374,6 +375,7 @@ static CAN_FIFOMailBox_TypeDef * gm_pump_hook(void) {
     gm_apply_buffer(&gm_lkas_buffer, false);
     //In OP only mode we need to send zero if controls are not allowed
     if (!current_controls_allowed) {
+      puts("current controls not allowed...\n");
       gm_lkas_buffer.current_frame.RDLR = 0U;
       gm_lkas_buffer.current_frame.RDHR = 0U;
     }
@@ -431,6 +433,9 @@ static CAN_FIFOMailBox_TypeDef * gm_pump_hook(void) {
   // Merge the rewritten checksum back into the BxCAN frame RDLR
   gm_lkas_buffer.current_frame.RDLR &= 0x0000FFFF;
   gm_lkas_buffer.current_frame.RDLR |= (checksumswap << 16);
+
+  puth(gm_lkas_buffer.current_frame.RDLR);
+  puts("\n");
 
   return (CAN_FIFOMailBox_TypeDef*)&gm_lkas_buffer.current_frame;
 }
