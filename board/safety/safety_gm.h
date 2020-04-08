@@ -225,6 +225,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 0x200) {
     if (!current_controls_allowed) {
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
+        puts("gas safety check failed");
         tx = 0;
       }
     }
@@ -251,7 +252,6 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 384) {
-    puts("Got Steering Cmd\n");
     //precalculated inactive zero values to be sent when there is a violation or inactivation
     uint32_t vals[4];
     vals[0] = 0x00000000U;
@@ -361,7 +361,10 @@ static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
 
 static CAN_FIFOMailBox_TypeDef * gm_pump_hook(void) {
-  volatile int pedal_pressed = (volatile int)gm_gas_prev || ((volatile int)gm_brake_prev && (volatile int)gm_moving);
+  //for now, we are only concerned with brake pedal being pressed
+  volatile int pedal_pressed = (volatile int)gm_brake_prev && (volatile int)gm_moving;
+
+  //volatile int pedal_pressed = (volatile int)gm_gas_prev || ((volatile int)gm_brake_prev && (volatile int)gm_moving);
   volatile bool current_controls_allowed = (volatile bool)controls_allowed && !(volatile int)pedal_pressed;
 
   if (!gm_ffc_detected) {
