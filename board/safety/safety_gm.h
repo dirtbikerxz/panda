@@ -223,9 +223,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if (addr == 0x200) {
-    puts("Got Gas Cmd");
+    puts("Got Gas Cmd\n");
     if (!current_controls_allowed) {
-      puts("!current_controls_allowed");
+      puts("!current_controls_allowed\n");
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
@@ -253,6 +253,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // LKA STEER: safety check
   if (addr == 384) {
+    puts("Got Steering Cmd\n");
     //precalculated inactive zero values to be sent when there is a violation or inactivation
     uint32_t vals[4];
     vals[0] = 0x00000000U;
@@ -326,7 +327,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       tx = 0;
     }
   }
-
+  putn(tx);
   // 1 allows the message through
   return tx;
 }
