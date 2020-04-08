@@ -223,7 +223,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if (addr == 0x200) {
+    puts("Got Gas Cmd");
     if (!current_controls_allowed) {
+      puts("!current_controls_allowed");
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
