@@ -203,6 +203,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int bus = GET_BUS(to_send);
 
   if (!msg_allowed(addr, bus, GM_TX_MSGS, sizeof(GM_TX_MSGS)/sizeof(GM_TX_MSGS[0]))) {
+    puts("MSG not allowed");
     tx = 0;
   }
 
