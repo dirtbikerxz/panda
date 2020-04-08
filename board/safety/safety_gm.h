@@ -29,7 +29,7 @@ const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
 const int GM_GAS_INTERCEPTOR_THRESHOLD = 458;  // (610 + 306.25) / 2ratio between offset and gain from dbc file
-const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0}, {200, 0},  // pt bus
+const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0}, {512, 0},  // pt bus
                               {161, 1}, {774, 1}, {776, 1}, {784, 1},   // obs bus
                               {789, 2},  // ch bus
                               {0x104c006c, 3}, {0x10400060, 3}};  // gmlan
@@ -203,7 +203,6 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   int bus = GET_BUS(to_send);
 
   if (!msg_allowed(addr, bus, GM_TX_MSGS, sizeof(GM_TX_MSGS)/sizeof(GM_TX_MSGS[0]))) {
-    puts("MSG not allowed");
     tx = 0;
   }
 
@@ -224,9 +223,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS: safety check
   if (addr == 0x200) {
-    puts("Got Gas Cmd\n");
     if (!current_controls_allowed) {
-      puts("!current_controls_allowed\n");
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
         tx = 0;
       }
@@ -305,6 +302,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     }
 
     if (violation) {
+      puts("no steer violation");
       //Replace payload with appropriate zero value for expected rolling counter
       to_send->RDLR = vals[rolling_counter];
     }
@@ -328,10 +326,10 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       tx = 0;
     }
   }
-  puth(addr);
-  puts(": ");
-  puth(tx);
-  puts("\n");
+  // puth(addr);
+  // puts(": ");
+  // puth(tx);
+  // puts("\n");
   // 1 allows the message through
   return tx;
 }
