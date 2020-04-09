@@ -327,11 +327,11 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       tx = 0;
     }
   }
-  // puth(addr);
-  // puts(": ");
-  // puth(tx);
-  // puts("\n");
-  // 1 allows the message through
+  puth(addr);
+  puts(": ");
+  puth(tx);
+  puts("\n");
+  //1 allows the message through
   return tx;
 }
 
@@ -434,6 +434,7 @@ static CAN_FIFOMailBox_TypeDef * gm_pump_hook(void) {
   gm_lkas_buffer.current_frame.RDLR &= 0x0000FFFF;
   gm_lkas_buffer.current_frame.RDLR |= (checksumswap << 16);
 
+  puts("lkas command: ");
   puth(gm_lkas_buffer.current_frame.RDLR);
   puts("\n");
 
