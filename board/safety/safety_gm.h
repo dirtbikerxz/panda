@@ -96,7 +96,7 @@ static void gm_set_op_lkas(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static void gm_detect_cam(void) {
-  if (gm_camera_bus != -1) return NULL;
+  if (gm_camera_bus != -1) return;
   if (board_has_relay()) {
     gm_camera_bus = 2;
   }
@@ -128,7 +128,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
         heartbeat_counter = 0U;
         gm_relay_open = true;
       }
-      return NULL;
+      return 0;
     }
   
 
@@ -233,7 +233,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 //     block all commands that produce actuation
 
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
-  if (board_has_relay() && !gm_relay_open) return NULL; //for now, when relay is closed we don't want to do anything
+  if (board_has_relay() && !gm_relay_open) return 0; //for now, when relay is closed we don't want to do anything
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -374,7 +374,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
-  if (board_has_relay() && !gm_relay_open) return NULL; //for now, when relay is closed we don't want to do anything
+  if (board_has_relay() && !gm_relay_open) return 0; //for now, when relay is closed we don't want to do anything
   gm_detect_cam();
   int bus_fwd = -1;
   if (bus_num == 0) {
