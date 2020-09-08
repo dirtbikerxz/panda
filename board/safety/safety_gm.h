@@ -44,6 +44,7 @@ AddrCheckStruct gm_rx_checks[] = {
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
+bool gm_relay_open = false;
 int gm_camera_bus = -1;
 int gm_brake_prev = 0;
 int gm_gas_prev = 0;
@@ -102,7 +103,6 @@ static void gm_detect_cam(void) {
   else {
     gm_camera_bus = 1;
   }
-
 }
 
 static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
@@ -114,6 +114,24 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     gm_detect_cam();
     int bus = GET_BUS(to_push);
     int addr = GET_ADDR(to_push);
+
+    if (board_has_relay() && !gm_relay_open) {
+      if (addr == 384) {
+        int rolling_counter = GET_BYTE(to_push, 0) >> 4;
+        if (rolling_counter == 0) {
+          gm_lkas_buffer.rolling_counter = 3
+        }
+        else {
+          gm_lkas_buffer.rolling_counter = rolling_counter - 1;
+        }
+        set_intercept_relay(true);
+        heartbeat_counter = 0U;
+        gm_relay_open = true;
+      }
+      return;
+    }
+  
+
 
     if (addr == 388) {
       int torque_driver_new = ((GET_BYTE(to_push, 6) & 0x7) << 8) | GET_BYTE(to_push, 7);
@@ -170,10 +188,11 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
-      if ((gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD) &&
-          (gas_interceptor_prev <= GM_GAS_INTERCEPTOR_THRESHOLD)) {
-        controls_allowed = 0; //TODO: remove / fix (probably problem with threshold)
-      }
+      //This seems to break pedal
+      // if ((gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD) &&
+      //     (gas_interceptor_prev <= GM_GAS_INTERCEPTOR_THRESHOLD)) {
+      //   controls_allowed = 0; //TODO: remove / fix (probably problem with threshold)
+      // }
       gas_interceptor_prev = gas_interceptor;
     }
 
@@ -214,6 +233,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 //     block all commands that produce actuation
 
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  if (board_has_relay() && !gm_relay_open) return; //for now, when relay is closed we don't want to do anything
 
   int tx = 1;
   int addr = GET_ADDR(to_send);
@@ -354,6 +374,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  if (board_has_relay() && !gm_relay_open) return; //for now, when relay is closed we don't want to do anything
   gm_detect_cam();
   int bus_fwd = -1;
   if (bus_num == 0) {
