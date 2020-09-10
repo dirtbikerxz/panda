@@ -156,9 +156,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
           break;
         case 6:  // cancel
           //temp disable cancel button for testing
-          if (gas_interceptor_detected) {
-            controls_allowed = 1;
-          } else {
+          if (!gas_interceptor_detected) {
             controls_allowed = 0;
           }
           break;
