@@ -186,11 +186,10 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x201) {
       gas_interceptor_detected = 1;
       int gas_interceptor = GET_INTERCEPTOR(to_push);
-      //This seems to break pedal
-      // if ((gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD) &&
-      //     (gas_interceptor_prev <= GM_GAS_INTERCEPTOR_THRESHOLD)) {
-      //   controls_allowed = 0; //TODO: remove / fix (probably problem with threshold)
-      // }
+      if ((gas_interceptor > GM_GAS_INTERCEPTOR_THRESHOLD) &&
+          (gas_interceptor_prev <= GM_GAS_INTERCEPTOR_THRESHOLD)) {
+        controls_allowed = 0; //TODO: remove / fix (probably problem with threshold)
+      }
       gas_interceptor_prev = gas_interceptor;
     }
 
