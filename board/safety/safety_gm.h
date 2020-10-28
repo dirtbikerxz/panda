@@ -185,9 +185,20 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     // This will drop up to 3 messages - up to 60ms lag. Totally acceptable.
     
     if (gm_rc_lkas != 5) {
-      if (rolling_counter != (gm_rc_lkas + 1) % 4) violation = true;
+      if (rolling_counter != (gm_rc_lkas + 1) % 4) {
+        puts("Wrong LKAS RC Value\r\n Expected: ");
+        puth((gm_rc_lkas + 1) % 4);
+        puts("\r\nEncountered: ");
+        puth(rolling_counter);
+        puts("\r\n");
+        violation = true;
+
+      } 
     }
     else {
+      puts("Uninitialised LKAS RC. Setting to\r\n");
+      puth(rolling_counter);
+      puts("\r\n");
       gm_rc_lkas = rolling_counter;
     }
 
@@ -216,7 +227,12 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
       //TODO: may require tuning. TODO: hopefully the timing can be caught here. If not, the lag is downstream TODO: debug output
       //We need to drop lkas frame when comes in too fast.
       // (we will then skip up to 4 frames)
-      if (ts_elapsed < 19000) violation = true;
+      if (ts_elapsed < 19000) {
+        puts("LKAS Elapsed less than 19ms\r\n");
+        puth(ts_elapsed);
+        puts("\r\n");
+        violation = true;
+      }
     }
 
     // no torque if controls is not allowed
@@ -261,6 +277,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 }
 
 static int gm_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+  return -1; //lets just get steering working first
   if (!gm_handle_relay(to_fwd)) return 0; //for now, when relay is closed we don't want to do anything
   int bus_fwd = -1;
   if (bus_num == 0) {
