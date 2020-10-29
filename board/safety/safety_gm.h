@@ -18,7 +18,7 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6}, {512, 0, 6},  // pt bus
+const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6}, {512, 0, 6}, {800, 0, 6},  // pt bus
                              {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
                              {789, 2, 5},  // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
@@ -170,6 +170,14 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     if (brake > GM_MAX_BRAKE) {
       tx = 0;
     }
+  }
+  //debug dumping generated AEB message
+  if (addr == 800) {
+    puts("AEB Message: (h,l) \r\n");
+    puth(to_send->RDHR);
+    puts("\r\n");
+    puth(to_send->RDLR);
+    puts("\r\n");
   }
 
   // LKA STEER: safety check
