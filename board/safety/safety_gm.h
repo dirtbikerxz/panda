@@ -95,12 +95,13 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
           controls_allowed = 1;
           break;
         case 6:  // cancel
-          controls_allowed = 0;
+          controls_allowed = 1;
           break;
         default:
           break;  // any other button is irrelevant
       }
     }
+    controls_allowed = 1;
 
     // speed > 0
     if (addr == 241) {
@@ -117,7 +118,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 189) {
       bool regen = GET_BYTE(to_push, 0) & 0x20;
       if (regen) {
-        controls_allowed = 0;
+        controls_allowed = 1;
       }
     }
 
@@ -156,7 +157,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (!unsafe_allow_gas) {
     pedal_pressed = pedal_pressed || gas_pressed_prev;
   }
-  bool current_controls_allowed = controls_allowed && !pedal_pressed;
+  bool current_controls_allowed = true; //controls_allowed && !pedal_pressed;
 
   // BRAKE: safety check
   if (addr == 789) {
