@@ -18,7 +18,7 @@ It is 2nd gen hardware, reusing code and parts from the [NEO](https://github.com
 Usage (Python)
 ------
 
-To install the library:
+To install the library::
 ```
 # pip install pandacan
 ```
